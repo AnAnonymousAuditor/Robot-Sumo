@@ -13,7 +13,7 @@
 
 // Sensores TCRT5000 en pines de interrupción
 #define SENSOR_DELANTERO_PIN 2  // INT0 - Sensor ADELANTE del robot
-#define SENSOR_TRASERO_PIN 4    // INT1 - Sensor ATRÁS del robot
+#define SENSOR_TRASERO_PIN 3    // INT1 - Sensor ATRÁS del robot
 
 // Servos (usar pines PWM)
 #define SERVO_IZQ_PIN 10   // PWM
@@ -84,8 +84,8 @@ void setup() {
   pinMode(SENSOR_TRASERO_PIN, INPUT_PULLUP);
 
   // Configurar interrupciones para sensores de línea
-  attachInterrupt(digitalPinToInterrupt(SENSOR_DELANTERO_PIN), detectarLineaDel, FALLING);
-  attachInterrupt(digitalPinToInterrupt(SENSOR_TRASERO_PIN), detectarLineaTra, FALLING);
+  attachInterrupt(digitalPinToInterrupt(SENSOR_DELANTERO_PIN), detectarLineaDel, RISING);
+  attachInterrupt(digitalPinToInterrupt(SENSOR_TRASERO_PIN), detectarLineaTra, RISING);
 
   // Configurar interrupción para ECHO del ultrasonido
   attachInterrupt(digitalPinToInterrupt(ECHO_PIN), echoInterrupt, CHANGE);
@@ -214,15 +214,15 @@ void manejarBorde() {
     // Decidir hacia dónde girar según qué sensor detectó
     if (lineaDelDetectada) {
       Serial.println("¡BORDE DELANTERO!");
-      girarHaciaIzq = !girarHaciaIzq;  // Girar a la derecha (alejarse del borde izq)
+      girarHaciaIzq = true;
     }
     else if (lineaTraDetectada) {
       Serial.println("¡BORDE TRASERO!");
-      girarHaciaIzq = !girarHaciaIzq;  // Girar a la izquierda (alejarse del borde der)
+      girarHaciaIzq = false;
     }
     else if (lineaDelDetectada && lineaTraDetectada) {
       Serial.println("¡BORDE LATERAL!");
-      girarHaciaIzq = !girarHaciaIzq;  // Girar a la derecha
+      girarHaciaIzq = true;
     }
   }
 
@@ -274,17 +274,22 @@ void atacarTurbo() {
 }
 
 void buscarOponente() {
+  static bool girarHaciaDer = false;
   // Giro continuo para escanear (sin delays)
   if (!girando) {
     tiempoGiro = millis();
     girando = true;
   }
 
-  girarDerecha();
+    if (girarHaciaDer) {
+        girarDerecha();
+    } else {
+        girarIzquierda();
+    }
 
   // Cambiar dirección cada 1.5 segundos
   if (millis() - tiempoGiro > 1500) {
-    girando = false;
+        girarHaciaDer = false;
   }
 }
 
